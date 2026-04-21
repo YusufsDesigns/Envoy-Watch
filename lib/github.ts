@@ -16,7 +16,10 @@ export function verifySignature(payload: string, sig: string): boolean {
 export async function getInstallationOctokit(installationId: number) {
   const auth = createAppAuth({
     appId: process.env.GITHUB_APP_ID!,
-    privateKey: process.env.GITHUB_APP_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+    privateKey: Buffer.from(
+      process.env.GITHUB_APP_PRIVATE_KEY!, 
+      'base64'
+    ).toString('utf-8'),
   })
   const { token } = await auth({ type: "installation", installationId })
   return new Octokit({ auth: token })
