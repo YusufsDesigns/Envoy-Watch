@@ -15,6 +15,12 @@ const PILL: Record<string, { bg: string; color: string; dot: string; label: stri
     dot:   "oklch(0.6 0.18 90)",
     label: "Building",
   },
+  deploying: {
+    bg:    "oklch(0.96 0.04 240)",
+    color: "oklch(0.45 0.14 240)",
+    dot:   "oklch(0.6 0.18 240)",
+    label: "Deploying",
+  },
   healthy: {
     bg:    "oklch(0.96 0.05 145)",
     color: "oklch(0.42 0.15 145)",
@@ -62,7 +68,7 @@ export default async function DashboardPage() {
   } catch {}
 
   const liveCount = envs.filter(e => e.status === "healthy").length
-  const buildingCount = envs.filter(e => e.status === "building").length
+  const buildingCount = envs.filter(e => e.status === "building" || e.status === "deploying").length
 
   const grouped = envs.reduce<Record<string, PreviewEnvironment[]>>((acc, env) => {
     if (!acc[env.repo]) acc[env.repo] = []
@@ -341,7 +347,7 @@ export default async function DashboardPage() {
                             }}
                           >
                             <span
-                              className={env.status === "building" ? "building-dot" : ""}
+                              className={env.status === "building" || env.status === "deploying" ? "building-dot" : ""}
                               style={{ width: "5px", height: "5px", borderRadius: "50%", background: pill.dot, flexShrink: 0 }}
                             />
                             {pill.label}

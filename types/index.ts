@@ -10,7 +10,7 @@ export interface PreviewEnvironment {
   locus_service_id: string | null
   locus_deployment_id: string | null
   comment_id: number | null
-  status: "building" | "healthy" | "failed" | "destroyed"
+  status: "building" | "deploying" | "healthy" | "failed" | "destroyed"
   preview_url: string | null
   build_started_at: string
   build_completed_at: string | null

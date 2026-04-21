@@ -4,7 +4,10 @@ import { sql } from "@/lib/db"
 import type { PRContext } from "@/types"
 
 const BUILDING_COMMENT = (branch: string) =>
-  `## 🚀 Envoy Watch Preview\n⏳ **Building preview environment...**\n🌿 **Branch:** \`${branch}\`\n_Takes 3–7 minutes. This comment updates when ready._`
+  `## 🚀 Envoy Watch Preview\n⏳ **Building...** — preparing your environment\n🌿 **Branch:** \`${branch}\`\n_This comment updates as your environment progresses._`
+
+const DEPLOYING_COMMENT = (branch: string) =>
+  `## 🚀 Envoy Watch Preview\n🔄 **Deploying...** — spinning up your app\n🌿 **Branch:** \`${branch}\`\n_Almost there. URL will appear when ready._`
 
 const HEALTHY_COMMENT = (url: string, branch: string, minutes: number) =>
   `## 🚀 Envoy Watch Preview\n✅ **Live:** ${url}\n🌿 **Branch:** \`${branch}\`\n⏱️ **Built in:** ~${minutes} min\n> Destroys automatically when this PR closes.`
@@ -68,6 +71,21 @@ async function handlePROpened(ctx: PRContext) {
   const serviceUrl = locusResult.services[0]?.url ?? null
   const deploymentId = locusResult.deployments[0]?.id ?? null
 
+  if (!deploymentId) {
+    await sql`
+      UPDATE preview_environments SET
+        locus_project_id = ${projectId},
+        locus_service_id = ${serviceId},
+        comment_id = ${commentId},
+        status = 'failed',
+        updated_at = NOW()
+      WHERE repo = ${repo} AND pr_number = ${prNumber}
+    `
+    await updateComment(installationId, repo, commentId, FAILED_COMMENT(branch))
+    return
+  }
+
+  // Locus accepted the deployment — transition to "deploying"
   await sql`
     UPDATE preview_environments SET
       locus_project_id = ${projectId},
@@ -75,18 +93,13 @@ async function handlePROpened(ctx: PRContext) {
       locus_deployment_id = ${deploymentId},
       comment_id = ${commentId},
       preview_url = ${serviceUrl},
+      status = 'deploying',
       updated_at = NOW()
     WHERE repo = ${repo} AND pr_number = ${prNumber}
   `
-
-  if (!deploymentId) {
-    await sql`
-      UPDATE preview_environments SET status = 'failed', updated_at = NOW()
-      WHERE repo = ${repo} AND pr_number = ${prNumber}
-    `
-    await updateComment(installationId, repo, commentId, FAILED_COMMENT(branch))
-    return
-  }
+  try {
+    await updateComment(installationId, repo, commentId, DEPLOYING_COMMENT(branch))
+  } catch {}
 
   // Poll deployment status (every 60s, max 10 min)
   const startedAt = Date.now()
