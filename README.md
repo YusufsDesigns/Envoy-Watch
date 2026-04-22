@@ -62,7 +62,7 @@ Envoy Watch
 ```
 
 **Stack:**
-- [Next.js 15](https://nextjs.org) (App Router, TypeScript)
+- [Next.js 16](https://nextjs.org) (App Router, TypeScript)
 - [Auth.js v5](https://authjs.dev) — GitHub OAuth for dashboard login
 - [Locus BuildWithLocus API](https://buildwithlocus.com) — infrastructure layer
 - [Neon Postgres](https://neon.tech) — stores PR → environment mappings
